@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blank Hybrid App Project Template</title>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <style>
+        @-ms-viewport { width: 100vw ; zoom: 100% ; }                          
+        @viewport { width: 100vw ; zoom: 100% ; }
+        @-ms-viewport { user-zoom: fixed ; }                                    
+        @viewport { user-zoom: fixed ; }
+    </style>
+
+    <script src="lib/ft/fastclick.js"></script>
+
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+    <img src="" id="picture" width="200" height="150" />
+    <progress min="0" max="100" id="progress"></progress><br>
+    <button onclick="captureCamera();">Take a Picture</button>
+    <button onclick="importLibrary();">Import from Library</button>
+   
+    <script src="intelxdk.js"></script>        
+    <script src="cordova.js"></script>          
+    <script src="xhr.js"></script>              
+
+    <script src="js/app.js"></script>
+    <script src="js/init-app.js"></script>
+    <script src="js/init-dev.js"></script>
+   
+    <script>
+        function captureCamera()
+        {
+            intel.xdk.camera.takePicture(10,true,"png");
+        }
+       
+        function importLibrary()
+        {
+            intel.xdk.camera.importPicture();
+        }
+       
+        document.addEventListener("intel.xdk.camera.picture.add",function(event){
+            var name = event.filename;
+            var url = intel.xdk.camera.getPictureURL(name);
+            document.getElementById("picture").setAttribute("src", url);
+            intel.xdk.file.uploadToServer(url,"http://labs.qnimate.com/demo/index.php", "", "image/png", "updateUploadProgress");
+        });
+       
+        document.addEventListener("intel.xdk.camera.picture.busy",function(){
+            alert("Camera is already in use");
+        });
+       
+        document.addEventListener("intel.xdk.camera.picture.cancel",function(){
+            alert("You pressed the cancel button");
+        });
+       
+        function updateUploadProgress(bytesSent,totalBytes)
+        {
+           if(totalBytes>0)
+                currentProgress=(bytesSent/totalBytes)*100;
+            document.getElementById("progress").setAttribute("value", currentProgress);
+        }
+
+        document.addEventListener("intel.xdk.file.upload.busy",uploadBusy);
+        document.addEventListener("intel.xdk.file.upload",uploadComplete);
+        document.addEventListener("intel.xdk.file.upload.cancel",uploadCancelled);
+
+        function uploadBusy(evt)
+        {
+           alert("Sorry, a file is already being uploaded");
+        }
+
+        function uploadComplete(evt)
+        {
+           if(evt.success==true)
+           {
+              alert("File "+evt.localURL+" was uploaded");
+           }
+           else {
+              alert("Error uploading file "+evt.message);
+           }
+        }
+
+        function uploadCancelled(evt)
+        {
+            alert("File upload was cancelled "+evt.localURL);
+        }  
+    </script>
+</body>
+</html>
